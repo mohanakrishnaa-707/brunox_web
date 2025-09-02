@@ -99,7 +99,7 @@ const Auth = () => {
           <div className="p-3 bg-white/20 rounded-full shadow-glow">
             <Waves className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white">OceanChat</h1>
+          <h1 className="text-4xl font-bold text-white">BrunoX Chat</h1>
         </div>
         <p className="text-white/90 text-lg">Decentralized messaging for the future</p>
         
@@ -124,7 +124,7 @@ const Auth = () => {
       <Card className="relative z-10 w-full max-w-md shadow-ocean border-white/20 bg-white/95 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl gradient-deep bg-clip-text text-transparent">
-            Welcome to OceanChat
+            Welcome to BrunoX Chat
           </CardTitle>
           <CardDescription>
             Join the decentralized conversation

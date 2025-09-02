@@ -20,7 +20,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="animate-wave mb-4">
             <Waves className="w-16 h-16 mx-auto" />
           </div>
-          <h2 className="text-2xl font-bold">OceanChat</h2>
+          <h2 className="text-2xl font-bold">BrunoX Chat</h2>
           <p className="text-white/80">Loading...</p>
         </div>
       </div>
@@ -50,12 +50,12 @@ const Layout = ({ children }: LayoutProps) => {
               <Waves className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-xl gradient-deep bg-clip-text text-transparent">
-                OceanChat
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Decentralized Messaging
-              </p>
+            <h1 className="font-bold text-xl gradient-deep bg-clip-text text-transparent">
+              BrunoX Chat
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Decentralized Messaging
+            </p>
             </div>
           </div>
           

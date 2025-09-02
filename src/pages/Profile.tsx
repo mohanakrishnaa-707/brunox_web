@@ -7,10 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Settings, Wallet, LogOut, Camera } from 'lucide-react';
+import { User, Settings, Wallet, LogOut, Camera, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useWeb3 } from '@/hooks/useWeb3';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
   username: string;
@@ -22,6 +24,7 @@ interface UserProfile {
 
 const Profile = () => {
   const { user, signOut } = useAuth();
+  const { account, balance, isConnected, isConnecting, connectWallet, disconnectWallet } = useWeb3();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,35 +37,70 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    // Mock loading user profile
-    // In real app, fetch from Supabase
-    if (user) {
-      setProfile(prev => ({
-        ...prev,
-        username: user.email?.split('@')[0] || 'user',
-        display_name: user.email || 'User'
-      }));
-    }
+    const loadProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setProfile({
+              username: data.username,
+              display_name: data.display_name || data.username,
+              bio: data.bio || '',
+              avatar_url: data.avatar_url || '',
+              status: (data.status as 'online' | 'away' | 'busy' | 'offline') || 'online'
+            });
+          }
+        } catch (error) {
+          console.error('Error loading profile:', error);
+          setProfile(prev => ({
+            ...prev,
+            username: user.email?.split('@')[0] || 'user',
+            display_name: user.email || 'User'
+          }));
+        }
+      }
+    };
+    
+    loadProfile();
   }, [user]);
 
   const handleSave = async () => {
+    if (!user) return;
+    
     setIsSaving(true);
     try {
-      // Mock saving profile
-      setTimeout(() => {
-        toast({
-          title: "Profile updated!",
-          description: "Your profile has been saved successfully.",
-        });
-        setIsEditing(false);
-        setIsSaving(false);
-      }, 1000);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: profile.username,
+          display_name: profile.display_name,
+          bio: profile.bio,
+          status: profile.status
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated!",
+        description: "Your profile has been saved successfully.",
+      });
+      setIsEditing(false);
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
         title: "Failed to update profile",
         description: "Please try again later.",
         variant: "destructive",
       });
+    } finally {
       setIsSaving(false);
     }
   };
@@ -275,19 +313,49 @@ const Profile = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Wallet className="w-5 h-5" />
-                Blockchain
+                Blockchain Wallet
               </CardTitle>
               <CardDescription>
                 Connect your wallet for decentralized features
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full transition-smooth hover:shadow-glow"
-              >
-                Connect Wallet
-              </Button>
+            <CardContent className="space-y-4">
+              {!isConnected ? (
+                <Button 
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="w-full gradient-ocean text-white hover:shadow-glow transition-smooth"
+                >
+                  {isConnecting ? 'Connecting...' : 'Connect MetaMask'}
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                    <Shield className="w-4 h-4 text-green-500" />
+                    <span className="text-xs text-muted-foreground">Connected</span>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Address</Label>
+                    <p className="text-xs font-mono bg-muted p-2 rounded truncate">
+                      {account}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Balance</Label>
+                    <p className="text-sm font-semibold">
+                      {Number(balance).toFixed(4)} ETH
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={disconnectWallet}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

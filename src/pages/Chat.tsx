@@ -1,100 +1,31 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Users, Hash } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-
-interface Conversation {
-  id: string;
-  name?: string;
-  type: 'direct' | 'group';
-  lastMessage?: string;
-  lastMessageTime?: string;
-  unreadCount: number;
-  participants: Array<{
-    id: string;
-    username: string;
-    avatar_url?: string;
-    status: string;
-  }>;
-}
+import { useChat } from '@/hooks/useChat';
+import { formatDistanceToNow } from 'date-fns';
 
 const Chat = () => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const navigate = useNavigate();
+  const { conversations, loading } = useChat();
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockConversations: Conversation[] = [
-      {
-        id: '1',
-        type: 'direct',
-        lastMessage: 'Hey! How are you doing?',
-        lastMessageTime: '2 min ago',
-        unreadCount: 2,
-        participants: [
-          {
-            id: '2',
-            username: 'alice_ocean',
-            avatar_url: '',
-            status: 'online'
-          }
-        ]
-      },
-      {
-        id: '2',
-        type: 'group',
-        name: 'Ocean Explorers',
-        lastMessage: 'Check out this amazing coral reef!',
-        lastMessageTime: '1h ago',
-        unreadCount: 0,
-        participants: [
-          {
-            id: '3',
-            username: 'bob_marine',
-            avatar_url: '',
-            status: 'online'
-          },
-          {
-            id: '4',
-            username: 'carol_deep',
-            avatar_url: '',
-            status: 'away'
-          }
-        ]
-      },
-      {
-        id: '3',
-        type: 'direct',
-        lastMessage: 'The blockchain integration is working perfectly!',
-        lastMessageTime: '3h ago',
-        unreadCount: 1,
-        participants: [
-          {
-            id: '5',
-            username: 'dev_waves',
-            avatar_url: '',
-            status: 'online'
-          }
-        ]
-      }
-    ];
-    setConversations(mockConversations);
-  }, []);
-
-  const getConversationTitle = (conversation: Conversation) => {
+  const getConversationTitle = (conversation: any) => {
     if (conversation.type === 'group') {
       return conversation.name || 'Group Chat';
     }
-    return conversation.participants[0]?.username || 'Direct Message';
+    const otherParticipant = conversation.participants?.find((p: any) => p.user_id !== user?.id);
+    return otherParticipant?.display_name || otherParticipant?.username || 'Direct Message';
   };
 
-  const getConversationAvatar = (conversation: Conversation) => {
+  const getConversationAvatar = (conversation: any) => {
     if (conversation.type === 'group') {
       return <Hash className="w-5 h-5 text-muted-foreground" />;
     }
-    const participant = conversation.participants[0];
+    const participant = conversation.participants?.find((p: any) => p.user_id !== user?.id);
     return (
       <Avatar className="w-10 h-10">
         <AvatarImage src={participant?.avatar_url} />
@@ -103,6 +34,10 @@ const Chat = () => {
         </AvatarFallback>
       </Avatar>
     );
+  };
+
+  const handleConversationClick = (conversationId: string) => {
+    navigate(`/chat/${conversationId}`);
   };
 
   return (
@@ -131,6 +66,7 @@ const Chat = () => {
             <Card 
               key={conversation.id} 
               className="p-4 hover:shadow-ocean transition-smooth cursor-pointer border-l-4 border-l-primary/20 hover:border-l-primary"
+              onClick={() => handleConversationClick(conversation.id)}
             >
               <div className="flex items-center gap-4">
                 {getConversationAvatar(conversation)}
@@ -143,22 +79,22 @@ const Chat = () => {
                         <Users className="w-4 h-4 text-muted-foreground" />
                       )}
                     </h3>
-                    {conversation.lastMessageTime && (
+                    {conversation.last_message && (
                       <span className="text-xs text-muted-foreground">
-                        {conversation.lastMessageTime}
+                        {formatDistanceToNow(new Date(conversation.last_message.created_at), { addSuffix: true })}
                       </span>
                     )}
                   </div>
                   
-                  {conversation.lastMessage && (
+                  {conversation.last_message && (
                     <p className="text-muted-foreground truncate">
-                      {conversation.lastMessage}
+                      {conversation.last_message.content}
                     </p>
                   )}
                   
                   <div className="flex items-center gap-2 mt-2">
-                    {conversation.participants.map((participant, index) => (
-                      <div key={participant.id} className="flex items-center gap-1">
+                    {conversation.participants?.slice(0, 3).map((participant: any, index: number) => (
+                      <div key={participant.user_id} className="flex items-center gap-1">
                         <div className={`w-2 h-2 rounded-full ${
                           participant.status === 'online' ? 'bg-green-500' :
                           participant.status === 'away' ? 'bg-yellow-500' : 'bg-gray-400'
@@ -166,17 +102,20 @@ const Chat = () => {
                         <span className="text-xs text-muted-foreground">
                           {participant.username}
                         </span>
-                        {index < conversation.participants.length - 1 && (
+                        {index < Math.min(conversation.participants.length - 1, 2) && (
                           <span className="text-xs text-muted-foreground">,</span>
                         )}
                       </div>
                     ))}
+                    {conversation.participants?.length > 3 && (
+                      <span className="text-xs text-muted-foreground">+{conversation.participants.length - 3} more</span>
+                    )}
                   </div>
                 </div>
 
-                {conversation.unreadCount > 0 && (
+                {conversation.unread_count > 0 && (
                   <Badge variant="default" className="gradient-ocean text-white">
-                    {conversation.unreadCount}
+                    {conversation.unread_count}
                   </Badge>
                 )}
               </div>

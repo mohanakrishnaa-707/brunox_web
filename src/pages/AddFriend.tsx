@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Search, Users, Hash } from 'lucide-react';
+import { UserPlus, Search, Users, Hash, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useFriends } from '@/hooks/useFriends';
+import { useChat } from '@/hooks/useChat';
 
 interface SearchResult {
   id: string;
@@ -21,60 +23,44 @@ const AddFriend = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
+  const { friends, friendRequests, searchUsers, sendFriendRequest, respondToFriendRequest } = useFriends();
+  const { createDirectConversation } = useChat();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
 
     setIsSearching(true);
-    
-    // Mock search results for demonstration
-    setTimeout(() => {
-      const mockResults: SearchResult[] = [
-        {
-          id: '1',
-          username: 'alice_ocean',
-          display_name: 'Alice Marine',
-          avatar_url: '',
-          status: 'online'
-        },
-        {
-          id: '2',
-          username: 'bob_marine',
-          display_name: 'Bob Explorer',
-          avatar_url: '',
-          status: 'away'
-        },
-        {
-          id: '3',
-          username: 'carol_deep',
-          display_name: 'Carol Deep',
-          avatar_url: '',
-          status: 'offline'
-        }
-      ];
-      
-      // Filter results based on search term
-      const filtered = mockResults.filter(user => 
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      setSearchResults(filtered);
+    try {
+      const results = await searchUsers(searchTerm);
+      setSearchResults(results);
+    } catch (error) {
+      toast({
+        title: "Search failed",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
   const handleAddFriend = async (user: SearchResult) => {
+    await sendFriendRequest(user.id);
+  };
+
+  const handleStartChat = async (friendId: string) => {
     try {
-      // Mock friend request
-      toast({
-        title: "Friend request sent!",
-        description: `Sent a friend request to ${user.username}`,
-      });
+      const conversationId = await createDirectConversation(friendId);
+      if (conversationId) {
+        toast({
+          title: "Chat started!",
+          description: "You can now start messaging.",
+        });
+      }
     } catch (error) {
       toast({
-        title: "Failed to send friend request",
+        title: "Error starting chat",
         description: "Please try again later.",
         variant: "destructive",
       });
@@ -144,12 +130,123 @@ const AddFriend = () => {
           </CardContent>
         </Card>
 
+        {/* Friend Requests */}
+        {friendRequests.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Friend Requests
+              </CardTitle>
+              <CardDescription>
+                {friendRequests.length} pending request{friendRequests.length === 1 ? '' : 's'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {friendRequests.map((request) => (
+                  <div 
+                    key={request.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={request.friend_profile?.avatar_url} />
+                        <AvatarFallback className="gradient-ocean text-white">
+                          {request.friend_profile?.username?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div>
+                        <h3 className="font-semibold">{request.friend_profile?.display_name || request.friend_profile?.username}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Wants to be your friend
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => respondToFriendRequest(request.id, true)}
+                        size="sm"
+                        className="gradient-ocean text-white hover:shadow-glow transition-smooth"
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        onClick={() => respondToFriendRequest(request.id, false)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Current Friends */}
+        {friends.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Friends ({friends.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {friends.map((friend) => (
+                  <div 
+                    key={friend.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:shadow-ocean transition-smooth"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={friend.friend_profile?.avatar_url} />
+                          <AvatarFallback className="gradient-ocean text-white">
+                            {friend.friend_profile?.username?.charAt(0).toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${getStatusColor(friend.friend_profile?.status || 'offline')}`} />
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold">{friend.friend_profile?.display_name || friend.friend_profile?.username}</h3>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Hash className="w-3 h-3" />
+                          {friend.friend_profile?.username}
+                        </p>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {friend.friend_profile?.status || 'offline'}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => handleStartChat(friend.friend_id)}
+                      size="sm"
+                      className="gradient-ocean text-white hover:shadow-glow transition-smooth"
+                    >
+                      Chat
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Search Results */}
         {searchResults.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
+                <Search className="w-5 h-5" />
                 Search Results
               </CardTitle>
               <CardDescription>
