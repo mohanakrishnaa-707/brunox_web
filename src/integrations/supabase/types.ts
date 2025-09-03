@@ -106,38 +106,47 @@ export type Database = {
       messages: {
         Row: {
           blockchain_hash: string | null
+          blockchain_verified: boolean | null
           content: string
           conversation_id: string
           created_at: string
           file_url: string | null
+          gas_used: number | null
           id: string
           message_type: string
           reply_to_id: string | null
           sender_id: string
+          transaction_fee: number | null
           updated_at: string
         }
         Insert: {
           blockchain_hash?: string | null
+          blockchain_verified?: boolean | null
           content: string
           conversation_id: string
           created_at?: string
           file_url?: string | null
+          gas_used?: number | null
           id?: string
           message_type?: string
           reply_to_id?: string | null
           sender_id: string
+          transaction_fee?: number | null
           updated_at?: string
         }
         Update: {
           blockchain_hash?: string | null
+          blockchain_verified?: boolean | null
           content?: string
           conversation_id?: string
           created_at?: string
           file_url?: string | null
+          gas_used?: number | null
           id?: string
           message_type?: string
           reply_to_id?: string | null
           sender_id?: string
+          transaction_fee?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -161,35 +170,44 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blockchain_verified: boolean | null
           created_at: string
           display_name: string | null
           id: string
+          last_blockchain_sync: string | null
           status: string | null
           updated_at: string
           user_id: string
           username: string
+          wallet_address: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blockchain_verified?: boolean | null
           created_at?: string
           display_name?: string | null
           id?: string
+          last_blockchain_sync?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
           username: string
+          wallet_address?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blockchain_verified?: boolean | null
           created_at?: string
           display_name?: string | null
           id?: string
+          last_blockchain_sync?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string
           username?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -198,7 +216,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_users: {
+        Args: { current_user_id: string; search_term: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          status: string
+          user_id: string
+          username: string
+          wallet_address: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

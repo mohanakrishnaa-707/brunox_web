@@ -88,15 +88,13 @@ export const useFriends = () => {
   };
 
   const searchUsers = async (searchTerm: string): Promise<SearchResult[]> => {
-    if (!searchTerm.trim()) return [];
+    if (!searchTerm.trim() || !user) return [];
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`username.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`)
-        .neq('user_id', user?.id)
-        .limit(10);
+      const { data, error } = await supabase.rpc('search_users', {
+        search_term: searchTerm,
+        current_user_id: user.id
+      });
 
       if (error) throw error;
       return data || [];
