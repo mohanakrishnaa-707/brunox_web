@@ -166,15 +166,22 @@ export const useChat = () => {
       if (error) throw error;
 
       // Transform the data to match our interface
-      const transformedMessages = data?.map(msg => ({
-        ...msg,
-        message_type: (msg.message_type as 'text' | 'file') || 'text',
-        sender: (msg.profiles && typeof msg.profiles === 'object' && 'username' in msg.profiles) ? {
-          username: (msg.profiles as any).username || 'Unknown',
-          display_name: (msg.profiles as any).display_name,
-          avatar_url: (msg.profiles as any).avatar_url
-        } : undefined
-      })) || [];
+      const transformedMessages = data?.map(msg => {
+        const profiles = msg.profiles as any;
+        return {
+          ...msg,
+          message_type: (msg.message_type as 'text' | 'file') || 'text',
+          sender: profiles ? {
+            username: profiles.username || 'Unknown',
+            display_name: profiles.display_name,
+            avatar_url: profiles.avatar_url
+          } : {
+            username: 'Unknown',
+            display_name: undefined,
+            avatar_url: undefined
+          }
+        };
+      }) || [];
 
       setMessages(transformedMessages);
     } catch (error) {

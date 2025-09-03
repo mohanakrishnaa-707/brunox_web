@@ -50,12 +50,38 @@ export const Web3Provider = ({ children }: { children: React.ReactNode }) => {
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert('Please install MetaMask!');
+      alert('Please install MetaMask or connect to Ganache!');
       return;
     }
 
     setIsConnecting(true);
     try {
+      // Try to switch to Ganache network (local)
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x539' }], // 1337 in hex (Ganache default)
+        });
+      } catch (switchError: any) {
+        // Network doesn't exist, add it
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x539',
+              chainName: 'Ganache Local',
+              nativeCurrency: {
+                name: 'Ethereum',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: ['http://127.0.0.1:7545'],
+              blockExplorerUrls: null,
+            }],
+          });
+        }
+      }
+
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       });
