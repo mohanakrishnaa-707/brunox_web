@@ -15,6 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface SearchResult {
   id: string;
+  user_id: string;
   username: string;
   display_name?: string;
   avatar_url?: string;
@@ -181,7 +182,7 @@ const Chat = () => {
                       </div>
                     </div>
                     <Button 
-                      onClick={() => sendFriendRequest(user.id)}
+                      onClick={() => sendFriendRequest(user.user_id)}
                       size="sm"
                       variant="outline"
                       className="text-xs"

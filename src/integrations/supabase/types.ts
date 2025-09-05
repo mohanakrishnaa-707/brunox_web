@@ -231,6 +231,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_conversation_ids: {
+        Args: { user_uuid: string }
+        Returns: {
+          conversation_id: string
+        }[]
+      }
       search_users: {
         Args: { current_user_id: string; search_term: string }
         Returns: {

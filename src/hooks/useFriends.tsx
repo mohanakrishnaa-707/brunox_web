@@ -19,6 +19,7 @@ interface Friend {
 
 interface SearchResult {
   id: string;
+  user_id: string;
   username: string;
   display_name?: string;
   avatar_url?: string;
@@ -104,7 +105,7 @@ export const useFriends = () => {
     }
   };
 
-  const sendFriendRequest = async (friendId: string) => {
+  const sendFriendRequest = async (friendUserId: string) => {
     if (!user) return;
 
     try {
@@ -112,7 +113,7 @@ export const useFriends = () => {
       const { data: existing } = await supabase
         .from('friends')
         .select('id')
-        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendUserId}),and(user_id.eq.${friendUserId},friend_id.eq.${user.id})`);
 
       if (existing && existing.length > 0) {
         toast({
@@ -127,7 +128,7 @@ export const useFriends = () => {
         .from('friends')
         .insert({
           user_id: user.id,
-          friend_id: friendId,
+          friend_id: friendUserId,
           status: 'pending'
         });
 
