@@ -106,9 +106,18 @@ export const useFriends = () => {
   };
 
   const sendFriendRequest = async (friendUserId: string) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to send friend requests.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      setLoading(true);
+
       // First ensure both users have profiles
       await supabase.rpc('ensure_profile_exists', { current_user_id: user.id });
       await supabase.rpc('ensure_profile_exists', { current_user_id: friendUserId });
@@ -136,7 +145,10 @@ export const useFriends = () => {
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
       toast({
         title: "Friend request sent!",
@@ -149,6 +161,8 @@ export const useFriends = () => {
         description: "Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
