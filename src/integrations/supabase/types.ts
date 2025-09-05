@@ -231,6 +231,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_profile_exists: {
+        Args: { current_user_id: string }
+        Returns: undefined
+      }
       get_user_conversation_ids: {
         Args: { user_uuid: string }
         Returns: {

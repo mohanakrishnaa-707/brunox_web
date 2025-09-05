@@ -109,6 +109,10 @@ export const useFriends = () => {
     if (!user) return;
 
     try {
+      // First ensure both users have profiles
+      await supabase.rpc('ensure_profile_exists', { current_user_id: user.id });
+      await supabase.rpc('ensure_profile_exists', { current_user_id: friendUserId });
+
       // Check if request already exists
       const { data: existing } = await supabase
         .from('friends')
