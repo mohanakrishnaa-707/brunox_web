@@ -236,7 +236,7 @@ export const useChat = () => {
   };
 
   const createDirectConversation = async (friendId: string) => {
-    if (!user) return;
+    if (!user) return null;
 
     try {
       // Create conversation
@@ -261,7 +261,14 @@ export const useChat = () => {
 
       if (participantError) throw participantError;
 
+      // Refresh conversations list
       await loadConversations();
+      
+      toast({
+        title: "Conversation created",
+        description: "Starting chat...",
+      });
+      
       return conversation.id;
     } catch (error) {
       console.error('Error creating conversation:', error);
@@ -270,6 +277,7 @@ export const useChat = () => {
         description: "Please try again.",
         variant: "destructive",
       });
+      return null;
     }
   };
 

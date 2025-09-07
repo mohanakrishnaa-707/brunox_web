@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,14 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, Users, Hash, Search, UserPlus, Wallet, Zap } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { MessageSquare, Users, Hash, Search, UserPlus, Wallet, Zap, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
 import { useFriends } from '@/hooks/useFriends';
 import { useWeb3 } from '@/hooks/useWeb3';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { formatDistanceToNow } from 'date-fns';
-import MobileChat from '@/components/MobileChat';
 
 interface SearchResult {
   id: string;
@@ -24,17 +23,17 @@ interface SearchResult {
   status: string;
 }
 
-const Chat = () => {
+const MobileChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { conversations, loading, createDirectConversation } = useChat();
   const { friends, searchUsers, sendFriendRequest } = useFriends();
   const { account, balance, isConnected, connectWallet } = useWeb3();
-  const isMobile = useIsMobile();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const getConversationTitle = (conversation: any) => {
     if (conversation.type === 'group') {
@@ -61,6 +60,7 @@ const Chat = () => {
 
   const handleConversationClick = (conversationId: string) => {
     navigate(`/chat/${conversationId}`);
+    setSheetOpen(false);
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -83,6 +83,7 @@ const Chat = () => {
       const conversationId = await createDirectConversation(friendId);
       if (conversationId) {
         navigate(`/chat/${conversationId}`);
+        setSheetOpen(false);
       }
     } catch (error) {
       console.error('Error starting chat:', error);
@@ -102,169 +103,180 @@ const Chat = () => {
     }
   };
 
-  if (isMobile) {
-    return <MobileChat />;
-  }
-
-  return (
-    <div className="flex h-screen">
-      {/* Friends Sidebar */}
-      <div className="w-80 bg-card border-r border-border overflow-y-auto">
-        <div className="p-4">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Friends & Search
-            </h2>
+  const FriendsContent = () => (
+    <div className="space-y-4">
+      {/* Blockchain Status */}
+      <Card className="p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Ganache</span>
           </div>
-
-          {/* Blockchain Status */}
-          <Card className="p-3 mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Ganache</span>
-              </div>
-              <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
-                {isConnected ? "Connected" : "Disconnected"}
-              </Badge>
+          <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
+            {isConnected ? "Connected" : "Disconnected"}
+          </Badge>
+        </div>
+        {isConnected ? (
+          <div className="text-xs text-muted-foreground">
+            <div className="truncate mb-1">{account}</div>
+            <div className="flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              {parseFloat(balance).toFixed(4)} ETH
             </div>
-            {isConnected ? (
-              <div className="text-xs text-muted-foreground">
-                <div className="truncate mb-1">{account}</div>
-                <div className="flex items-center gap-1">
-                  <Zap className="w-3 h-3" />
-                  {parseFloat(balance).toFixed(4)} ETH
+          </div>
+        ) : (
+          <Button 
+            onClick={connectWallet}
+            size="sm"
+            className="w-full gradient-ocean text-white"
+          >
+            Connect Wallet
+          </Button>
+        )}
+      </Card>
+
+      {/* Search */}
+      <form onSubmit={handleSearch}>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="transition-smooth focus:shadow-glow"
+          />
+          <Button 
+            type="submit" 
+            size="sm"
+            disabled={isSearching || !searchTerm.trim()}
+            className="gradient-ocean text-white"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+        </div>
+      </form>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Search Results</h3>
+          <div className="space-y-2">
+            {searchResults.map((user) => (
+              <div key={user.id} className="flex items-center justify-between p-2 border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.avatar_url} />
+                    <AvatarFallback className="gradient-ocean text-white text-xs">
+                      {user.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="text-sm font-medium">{user.display_name || user.username}</div>
+                    <div className="text-xs text-muted-foreground">@{user.username}</div>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => sendFriendRequest(user.user_id)}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                >
+                  <UserPlus className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Separator className="my-4" />
+        </div>
+      )}
+
+      {/* Friends List */}
+      <div>
+        <h3 className="text-sm font-medium mb-2">Friends ({friends.length})</h3>
+        <div className="space-y-2">
+          {friends.map((friend) => (
+            <div 
+              key={friend.id}
+              onClick={() => handleStartChat(friend.friend_id)}
+              className="flex items-center gap-3 p-2 border rounded-lg hover:shadow-ocean transition-smooth cursor-pointer"
+            >
+              <div className="relative">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={friend.friend_profile?.avatar_url} />
+                  <AvatarFallback className="gradient-ocean text-white">
+                    {friend.friend_profile?.username?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(friend.friend_profile?.status || 'offline')}`} />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">
+                  {friend.friend_profile?.display_name || friend.friend_profile?.username}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {friend.friend_profile?.status || 'offline'}
                 </div>
               </div>
-            ) : (
-              <Button 
-                onClick={connectWallet}
-                size="sm"
-                className="w-full gradient-ocean text-white"
-              >
-                Connect Wallet
-              </Button>
-            )}
-          </Card>
-
-          {/* Search */}
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="transition-smooth focus:shadow-glow"
-              />
-              <Button 
-                type="submit" 
-                size="sm"
-                disabled={isSearching || !searchTerm.trim()}
-                className="gradient-ocean text-white"
-              >
-                <Search className="w-4 h-4" />
-              </Button>
             </div>
-          </form>
-
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">Search Results</h3>
-              <div className="space-y-2">
-                {searchResults.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 border rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={user.avatar_url} />
-                        <AvatarFallback className="gradient-ocean text-white text-xs">
-                          {user.username.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="text-sm font-medium">{user.display_name || user.username}</div>
-                        <div className="text-xs text-muted-foreground">@{user.username}</div>
-                      </div>
-                    </div>
-                    <Button 
-                      onClick={() => sendFriendRequest(user.user_id)}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      <UserPlus className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <Separator className="my-4" />
+          ))}
+          
+          {friends.length === 0 && (
+            <div className="text-center py-4 text-muted-foreground">
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No friends yet</p>
+              <p className="text-xs">Search above to add friends</p>
             </div>
           )}
-
-          {/* Friends List */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">Friends ({friends.length})</h3>
-            <div className="space-y-2">
-              {friends.map((friend) => (
-                <div 
-                  key={friend.id}
-                  onClick={() => handleStartChat(friend.friend_id)}
-                  className="flex items-center gap-3 p-2 border rounded-lg hover:shadow-ocean transition-smooth cursor-pointer"
-                >
-                  <div className="relative">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={friend.friend_profile?.avatar_url} />
-                      <AvatarFallback className="gradient-ocean text-white">
-                        {friend.friend_profile?.username?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(friend.friend_profile?.status || 'offline')}`} />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {friend.friend_profile?.display_name || friend.friend_profile?.username}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {friend.friend_profile?.status || 'offline'}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {friends.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No friends yet</p>
-                  <p className="text-xs">Search above to add friends</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Main Chat Area */}
-      <div className="flex-1 p-2 md:p-4">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <MessageSquare className="w-8 h-8 text-primary" />
-            BrunoX Chat
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Decentralized messaging powered by blockchain
-          </p>
-        </div>
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <MessageSquare className="w-6 h-6 text-primary" />
+          BrunoX Chat
+        </h1>
+        
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80">
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Friends & Search
+              </SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <FriendsContent />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
 
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto p-4">
         {conversations.length === 0 ? (
           <Card className="p-8 text-center">
             <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No conversations yet</h3>
-            <p className="text-muted-foreground">
-              Click on a friend to start chatting or search for new friends!
+            <p className="text-muted-foreground mb-4">
+              Tap the menu button to find friends and start chatting!
             </p>
+            <Button 
+              onClick={() => setSheetOpen(true)}
+              className="gradient-ocean text-white"
+            >
+              Find Friends
+            </Button>
           </Card>
         ) : (
           <div className="space-y-2">
@@ -334,4 +346,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default MobileChat;

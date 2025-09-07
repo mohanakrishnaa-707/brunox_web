@@ -86,7 +86,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <Card className="p-4 border-b border-border">
+      <Card className="p-2 md:p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -98,7 +98,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h2 className="text-lg font-semibold">Blockchain Chat</h2>
+              <h2 className="text-base md:text-lg font-semibold">Blockchain Chat</h2>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {isConnected ? (
                   <Badge variant="default" className="text-xs gradient-ocean text-white">
@@ -117,7 +117,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
       </Card>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-4">
         {messages.map((message) => {
           const isOwnMessage = message.sender_id === user?.id;
           
@@ -126,7 +126,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
               key={message.id}
               className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-xs lg:max-w-md ${isOwnMessage ? 'order-2' : 'order-1'}`}>
+              <div className={`max-w-[85%] md:max-w-xs lg:max-w-md ${isOwnMessage ? 'order-2' : 'order-1'}`}>
                 {!isOwnMessage && (
                   <div className="flex items-center gap-2 mb-1">
                     <Avatar className="w-6 h-6">
@@ -175,7 +175,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
       </div>
 
       {/* Message Input */}
-      <Card className="p-4 border-t border-border">
+      <Card className="p-2 md:p-4 border-t border-border">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             type="text"
