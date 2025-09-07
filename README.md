@@ -257,34 +257,14 @@ npm run lint         # Run ESLint
 4. Test thoroughly
 5. Submit a pull request
 
-## 📱 Deployment
-
-### Using Lovable
-
-1. Open [Lovable Project](https://lovable.dev/projects/a3630b61-ea66-47c2-94dd-fde257028d3f)
-2. Click "Share" → "Publish"
-3. Your app will be deployed automatically
-
-### Custom Domain
-
-To connect a custom domain:
-1. Navigate to Project > Settings > Domains in Lovable
-2. Click "Connect Domain"
-3. Follow the setup instructions
-
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- Built with [Lovable](https://lovable.dev)
 - Powered by [Supabase](https://supabase.com)
 - Blockchain integration with [Ethers.js](https://ethers.org)
 - UI components from [shadcn/ui](https://ui.shadcn.com)
 
 ---
-
-**Happy Chatting! 🚀**
-
-For more information and support, visit our [documentation](https://docs.lovable.dev) or join our [Discord community](https://discord.com/channels/1119885301872070706/1280461670979993613).
