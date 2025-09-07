@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ const AddFriend = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { friends, friendRequests, searchUsers, sendFriendRequest, respondToFriendRequest } = useFriends();
   const { createDirectConversation } = useChat();
@@ -55,8 +57,9 @@ const AddFriend = () => {
       if (conversationId) {
         toast({
           title: "Chat started!",
-          description: "You can now start messaging.",
+          description: "Taking you to the conversation...",
         });
+        navigate(`/chat/${conversationId}`);
       }
     } catch (error) {
       toast({
