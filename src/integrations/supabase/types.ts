@@ -241,6 +241,10 @@ export type Database = {
           conversation_id: string
         }[]
       }
+      is_user_in_conversation: {
+        Args: { conv_id: string; user_uuid: string }
+        Returns: boolean
+      }
       search_users: {
         Args: { current_user_id: string; search_term: string }
         Returns: {
