@@ -236,7 +236,7 @@ const MobileChat = () => {
   return (
     <div className="flex flex-col h-screen">
       {/* Mobile Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <MessageSquare className="w-6 h-6 text-primary" />
           BrunoX Chat

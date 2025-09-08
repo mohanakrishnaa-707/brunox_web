@@ -86,7 +86,7 @@ export const BlockchainChatRoom = ({ conversationId, onBack }: BlockchainChatRoo
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <Card className="p-2 md:p-4 border-b border-border">
+      <Card className="p-2 md:p-4 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
